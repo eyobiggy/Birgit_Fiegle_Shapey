@@ -1,4 +1,5 @@
 import pygame
+import random
 import sys
 from main import generate_artwork
 from io import BytesIO
@@ -15,7 +16,7 @@ BG_COLOR = (240, 240, 240)
 
 # Screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Background Generator")
+pygame.display.set_caption("Shapey")
 
 # States
 STATE_START = "start"
@@ -31,8 +32,26 @@ complexity = 3
 generated_image = None
 generated_surface = None
 
+save_message = ""
+save_message_timer = 0
+
 dropdown_open = False
 dragging_slider = False
+
+import os
+import time
+
+def ask_save_path_safe():
+    # Choose a base folder — you can also use "~/Desktop" or "~/Documents"
+    base_folder = os.path.expanduser("~/Pictures/GeneratedArt")
+    os.makedirs(base_folder, exist_ok=True)  # Create folder if it doesn't exist
+
+    # Generate a unique filename based on timestamp
+    timestamp = int(time.time())
+    filename = f"generated_image_{timestamp}.png"
+
+    # Full path to save image
+    return os.path.join(base_folder, filename)
 
 
 def pil_to_surface(pil_image):
@@ -57,20 +76,17 @@ def draw_button(label, rect, color=(180, 180, 180)):
 def draw_start_screen():
     screen.fill(BG_COLOR)
 
-    # --- Dropdown for vibe ---
+    # --- Vibe Buttons ---
     draw_text("Choose a vibe:", 50, 40)
-    dropdown_rect = pygame.Rect(50, 70, 200, 40)
-    pygame.draw.rect(screen, (200, 200, 200), dropdown_rect)
-    draw_text(vibes[selected_vibe_index], dropdown_rect.x + 10, dropdown_rect.y + 10)
-
-    # Dropdown expanded options
-    dropdown_options = []
-    if dropdown_open:
-        for i, vibe in enumerate(vibes):
-            option_rect = pygame.Rect(50, 110 + i * 40, 200, 40)
-            pygame.draw.rect(screen, (220, 220, 220), option_rect)
-            draw_text(vibe, option_rect.x + 10, option_rect.y + 10)
-            dropdown_options.append((option_rect, i))
+    vibe_buttons = []
+    start_x = 50
+    for i, vibe in enumerate(vibes):
+        btn_rect = pygame.Rect(start_x, 70, 100, 40)
+        color = (150, 200, 255) if i == selected_vibe_index else (200, 200, 200)
+        pygame.draw.rect(screen, color, btn_rect)
+        draw_text(vibe, btn_rect.x + 5, btn_rect.y + 10)
+        vibe_buttons.append((btn_rect, i))
+        start_x += 110  # spacing
 
     # --- Slider for complexity ---
     draw_text("Choose complexity:", 50, 250)
@@ -84,8 +100,7 @@ def draw_start_screen():
     # --- Generate button ---
     btn_generate = draw_button("Generate", pygame.Rect(50, 340, 150, 40))
 
-    return dropdown_rect, dropdown_options, slider_bar, knob_rect, btn_generate
-
+    return vibe_buttons, slider_bar, knob_rect, btn_generate
 
 
 def draw_display_screen():
@@ -107,6 +122,7 @@ def draw_display_screen():
 def main_loop():
     global current_state, selected_vibe_index, complexity, generated_image, generated_surface
     global dropdown_open, dragging_slider
+    global save_message, save_message_timer
 
     clock = pygame.time.Clock()
 
@@ -137,23 +153,17 @@ def main_loop():
                 dragging_slider = False
 
         if current_state == STATE_START:
-            dropdown_rect, dropdown_options, slider_bar, knob_rect, btn_generate = draw_start_screen()
+            vibe_buttons, slider_bar, knob_rect, btn_generate = draw_start_screen()
 
             if mouse_clicked:
-                # Toggle dropdown open/closed
-                if dropdown_rect.collidepoint(mouse_pos):
-                    dropdown_open = not dropdown_open
-
-                # Clicked a dropdown option
-                elif dropdown_open:
-                    for rect, index in dropdown_options:
-                        if rect.collidepoint(mouse_pos):
-                            selected_vibe_index = index
-                            dropdown_open = False
-                            break
+                # Check vibe button clicks
+                for rect, index in vibe_buttons:
+                    if rect.collidepoint(mouse_pos):
+                        selected_vibe_index = index
+                        break
 
                 # Clicked slider knob to drag
-                elif knob_rect.collidepoint(mouse_pos):
+                if knob_rect.collidepoint(mouse_pos):
                     dragging_slider = True
 
                 # Clicked generate button
@@ -173,10 +183,17 @@ def main_loop():
         elif current_state == STATE_DISPLAY:
             btn_save, btn_new, btn_back = draw_display_screen()
 
+            if save_message and pygame.time.get_ticks() - save_message_timer < 3000:
+                draw_text(save_message, 50, HEIGHT - 50)
+
             if mouse_clicked:
                 if btn_save.collidepoint(mouse_pos):
-                    pygame.image.save(generated_surface, "saved_image.png")
-                    print("Image saved.")
+                    file_path = ask_save_path_safe()
+                    if file_path:
+                        pygame.image.save(generated_surface, file_path)
+                        save_message = f"Image saved to: {file_path}"
+                        save_message_timer = pygame.time.get_ticks()
+
                 elif btn_new.collidepoint(mouse_pos):
                     vibe = vibes[selected_vibe_index]
                     generated_image = generate_artwork(vibe, complexity)

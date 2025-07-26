@@ -10,19 +10,22 @@ class Palette:
 
     def generate(self, n=6):
         palette = []
-        base_hue = random.randint(*self.base_hue_range)
+        hue_min, hue_max = self.base_hue_range
 
-        for _ in range(n):
-            hue = (base_hue + random.randint(-20,20)) % 360
+        if hue_max - hue_min >= 60:  # wide hue range: spread hues evenly
+            hue_steps = [hue_min + (i / n) * (hue_max - hue_min) for i in range(n)]
+        else:  # narrow hue range: vary hue subtly around center
+            base_hue = random.uniform(hue_min, hue_max)
+            hue_steps = [(base_hue + random.uniform(-5, 5)) % 360 for _ in range(n)]
+
+        for hue in hue_steps:
             sat = random.uniform(*self.saturation_range)
             val = random.uniform(*self.value_range)
-            rgb = hsv_to_rgb(hue/360, sat, val)
-            rgb_255 = tuple(int(x*255) for x in rgb)
+            rgb = hsv_to_rgb(hue / 360, sat, val)
+            rgb_255 = tuple(int(x * 255) for x in rgb)
             palette.append('#{:02x}{:02x}{:02x}'.format(*rgb_255))
 
         return palette
-
-    ## add def contrast_colour later?
 
 
 class ColourfulPalette(Palette):
@@ -47,10 +50,23 @@ class OceanPalette(Palette):
 
 class BeigePalette(Palette):
     def __init__(self):
-        super().__init__(base_hue_range=(30,40), saturation_range=(0.1,0.5), value_range=(0.5,1.0))
+        super().__init__(base_hue_range=(30,40), saturation_range=(0.1,0.3), value_range=(0.7,1.0))
 
 class ForestPalette(Palette):
     def __init__(self):
         super().__init__(base_hue_range=(80,130), saturation_range=(0.5,0.9), value_range=(0.1,0.5))
 
+def get_palette(vibe):
+    palette_map = {
+        "colourful": ColourfulPalette,
+        "sunshine": SunshinePalette,
+        "dark": DarkPalette,
+        "pastel": PastelPalette,
+        "beige": BeigePalette,
+        "ocean": OceanPalette,
+        "forest": ForestPalette,
+    }
+
+    palette_class = palette_map.get(vibe.lower(), ColourfulPalette)  # fallback to colourful
+    return palette_class().generate()
 

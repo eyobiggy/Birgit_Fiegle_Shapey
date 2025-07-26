@@ -1,3 +1,5 @@
+import random
+
 def draw_lines(draw, palette, complexity, size):
     width, height = size
     count = complexity * 7
