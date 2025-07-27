@@ -8,10 +8,10 @@ from shapes import draw_squiggle
 from shapes import draw_diamonds
 from shapes import draw_worm
 from shapes import draw_raindrops
-from lines import draw_lines
+from shapes import draw_lines
 
 
-def generate_artwork(vibe, complexity, save_path=None, size=(800, 700), selected_shapes=None):
+def generate_artwork(vibe, complexity, save_path=None, size=(890, 697), selected_shapes=None):
     palette = get_palette(vibe)
     image = generate_background(size, palette)
     draw = ImageDraw.Draw(image)
