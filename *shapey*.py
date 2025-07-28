@@ -3,20 +3,20 @@ import random
 import sys
 import os
 import time
-from main import generate_artwork
+from art_generator import generate_artwork
 from io import BytesIO
 from PIL import Image
 
 pygame.init()
 
-start_bg = pygame.image.load(os.path.join("assets", "start_bg.png"))
-display_bg = pygame.image.load(os.path.join("assets", "display_bg.png"))
+start_bg = pygame.image.load(os.path.join("media", "start_bg.png"))
+display_bg = pygame.image.load(os.path.join("media", "display_bg.png"))
 
 # Constants
 WIDTH, HEIGHT = 1000, 800
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-FONT = pygame.font.Font("assets/spacemono_font.ttf", 24)
+FONT = pygame.font.Font("media/spacemono_font.ttf", 24)
 TEXT_COLOR = (31, 26, 22)
 BG_COLOR = (240, 240, 240)
 
@@ -109,7 +109,7 @@ def draw_start_block(screen, screen_size):
 
 def draw_message_box(message, filepath, x, y, width, height):
 
-    small_font = pygame.font.Font("assets/spacemono_font.ttf", 16)
+    small_font = pygame.font.Font("media/spacemono_font.ttf", 16)
     # Colors same as buttons
     base_color = (255, 237, 212)
     border_color = (110, 67, 28)

@@ -8,15 +8,11 @@ class Palette:
         self.saturation_range = saturation_range
         self.value_range = value_range
 
-    def generate(self, n=6):
+    def generate(self, n=10):
         palette = []
         hue_min, hue_max = self.base_hue_range
 
-        if hue_max - hue_min >= 60:  # wide hue range: spread hues evenly
-            hue_steps = [hue_min + (i / n) * (hue_max - hue_min) for i in range(n)]
-        else:  # narrow hue range: vary hue subtly around center
-            base_hue = random.uniform(hue_min, hue_max)
-            hue_steps = [(base_hue + random.uniform(-5, 5)) % 360 for _ in range(n)]
+        hue_steps = [random.uniform(hue_min, hue_max) for _ in range(n)]
 
         for hue in hue_steps:
             sat = random.uniform(*self.saturation_range)
@@ -34,7 +30,7 @@ class ColourfulPalette(Palette):
 
 class SunshinePalette(Palette):
     def __init__(self):
-        super().__init__(base_hue_range=(20,60), saturation_range=(0.9,1.0), value_range=(0.7,1.0))
+        super().__init__(base_hue_range=(20,50), saturation_range=(0.9,1.0), value_range=(0.8,1.0))
 
 class DarkPalette(Palette):
     def __init__(self):
@@ -46,7 +42,7 @@ class PastelPalette(Palette):
 
 class OceanPalette(Palette):
     def __init__(self):
-        super().__init__(base_hue_range=(160,250), saturation_range=(0.0,1.0), value_range=(0.7,1.0))
+        super().__init__(base_hue_range=(180,220), saturation_range=(0.5,1.0), value_range=(0.7,1.0))
 
 class BeigePalette(Palette):
     def __init__(self):
