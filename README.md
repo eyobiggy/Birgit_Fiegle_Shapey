@@ -6,6 +6,13 @@ The final product is a fully functional, GUI-based background generator built wi
 The tool is meant to be fun, accessible, and surprising. Users can adjust complexity, select color moods, and generate new visuals with the press of a button.
 
 
-Have fun and get creative!
-
 ![Demo of Shapey](media/shapey_program_showcase.gif)
+
+
+Installation:
+See and install the required dependencies in: requirements.txt
+
+Usage:
+To start the program, please run the file called "*Shapey.py"
+
+Have fun and get creative!
