@@ -1,3 +1,5 @@
+### This is where all the shapes and colors are turned into an artwork
+
 from background import generate_background
 from palettes import get_palette
 from PIL import ImageDraw
@@ -11,6 +13,7 @@ from shapes import draw_raindrops
 from shapes import draw_lines
 
 
+# Generate artwork using selected vibe, complexity and shapes
 def generate_artwork(vibe, complexity, save_path=None, size=(890, 697), selected_shapes=None):
     palette = get_palette(vibe)
     image = generate_background(size, palette)

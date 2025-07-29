@@ -1,7 +1,10 @@
+### Here is defined how the different lines and shapes are being drawn and spread randomly on the canvas: lots of math
+
 import random
 import math
 from PIL import ImageDraw, Image
 
+# Converts hex color to RGBA tuple
 def hex_to_rgba(hex_color, alpha=255):
     hex_color = hex_color.lstrip("#")
     r = int(hex_color[0:2], 16)
@@ -9,6 +12,7 @@ def hex_to_rgba(hex_color, alpha=255):
     b = int(hex_color[4:6], 16)
     return (r, g, b, alpha)
 
+# draws random straight lines, each line with random start and end point, random color from palette
 def draw_lines(draw, palette, complexity, size):
     width, height = size
     count = complexity * 7
@@ -21,9 +25,10 @@ def draw_lines(draw, palette, complexity, size):
         color = random.choice(palette)
         draw.line((x1, y1, x2, y2), fill=color, width=random.randint(1, 4))
 
+# Draws circular shapes at random positions, circle radius and number based on complexity
 def draw_circles(draw, palette, complexity, size):
     width, height = size
-    count = int((complexity ** 2) * 1.5)  # Adjust multiplier as needed
+    count = int((complexity ** 2) * 1.5)
 
     for _ in range(count):
         radius = random.randint(10, int(150 / complexity))
@@ -32,10 +37,8 @@ def draw_circles(draw, palette, complexity, size):
         color = random.choice(palette)
         draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=color, outline=None)
 
+# draws 5 pointed star centered at (cx, cy) with a given size and random rotation
 def draw_star(draw, cx, cy, size, color):
-    """
-    Draws a 5-pointed star centered at (cx, cy) with a given size and random rotation.
-    """
     outer_radius = size / 2
     inner_radius = outer_radius * 0.5
     angle_offset = math.radians(random.uniform(0, 360))  # random rotation in radians
@@ -50,6 +53,7 @@ def draw_star(draw, cx, cy, size, color):
 
     draw.polygon(points, fill=color)
 
+# places multiple stars with random position, size and color, based on complexity
 def draw_stars(draw, palette, complexity, size):
     for _ in range(int(complexity ** 1.7) * 2):
         cx = random.randint(0, size[0])
@@ -58,6 +62,7 @@ def draw_stars(draw, palette, complexity, size):
         color = random.choice(palette)
         draw_star(draw, cx, cy, r, color)
 
+# draws randomly oriented triangles, each is made of 3 points with offsets from a base
 def draw_triangle(draw, palette, complexity, size):
     for _ in range(int((complexity ** 2) * 1.5)):
         x1 = random.randint(0, size[0])
@@ -68,6 +73,8 @@ def draw_triangle(draw, palette, complexity, size):
         y3 = y1 + random.randint(-150, 150)
         draw.polygon([(x1, y1), (x2, y2), (x3, y3)], fill=random.choice(palette))
 
+# draws smooth chaotic squiggles by walking a point randomly and connecting steps with a curve
+# each squiggle is made of 10 - 30 points
 def draw_squiggle(draw, palette, complexity, size):
     for _ in range(int(complexity ** 1.3)):
         points = []
@@ -81,6 +88,8 @@ def draw_squiggle(draw, palette, complexity, size):
         color = random.choice(palette)
         draw.line(points, fill=color, width=random.randint(3, 8), joint="curve")
 
+# draws overlapping semi-transparent circles along sine wave path (worm)
+# uses parametric curve: x = t * length, y = sin(t * freq) * amplitude
 def draw_worm(image, draw, palette, complexity, size):
     for _ in range(max(1, int(complexity * 0.6))):
         cx = random.randint(100, size[0] - 100)
@@ -120,6 +129,7 @@ def draw_worm(image, draw, palette, complexity, size):
         # Paste onto main image
         image.paste(worm_overlay, (0, 0), worm_overlay)
 
+# draws diamond shape by connecting 4 points
 def draw_diamond(draw, cx, cy, size, color):
     w = size
     h = size * 1.5
@@ -131,6 +141,7 @@ def draw_diamond(draw, cx, cy, size, color):
     ]
     draw.polygon(drop, fill=color)
 
+# draws multiple diamonds, count and size based on complexity
 def draw_diamonds(draw, palette, complexity, size):
     for _ in range(int((complexity ** 2) * 1.5)):
         cx = random.randint(0, size[0])
@@ -139,18 +150,13 @@ def draw_diamonds(draw, palette, complexity, size):
         color = random.choice(palette)
         draw_diamond(draw, cx, cy, r, color)
 
+# draws teardrop shape using two lines from tip to circle edge and one semicircular arc
 def draw_raindrop(draw, cx, cy, size, color):
-    """
-    Draw a 💧-shaped raindrop using two straight lines and a circular arc.
-    cx, cy = center of the circle at the bottom
-    size = width of the circle (diameter)
-    color = fill color
-    """
     radius = size / 2
     circle_center = (cx, cy)
-    angle_degrees = 18.35  # half of 36.7°
+    angle_degrees = 18.35
 
-    # Calculate points where lines touch the circle (points B and C)
+    # Calculate points where lines touch the circle
     angle_radians = math.radians(angle_degrees)
     dx = math.sin(angle_radians) * radius
     dy = math.cos(angle_radians) * radius
@@ -158,30 +164,29 @@ def draw_raindrop(draw, cx, cy, size, color):
     bx = cx + dx
     by = cy - dy
     cx_ = cx - dx
-    cy_ = by  # same height as B
+    cy_ = by
 
     # Tip point A
-    tip_height = cy - radius - radius * 0.6  # slightly above the circle
+    tip_height = cy - radius - radius * 0.6
     ax = cx
     ay = tip_height
 
-    # Create path: A -> B -> arc from B to C -> C -> back to A
     path = [(ax, ay), (bx, by)]
 
-    # Draw arc (approximated with points)
+    # Draw arc
     steps = 30
     for i in range(steps + 1):
-        theta = math.pi * (i / steps)  # From 0 to π
+        theta = math.pi * (i / steps)
         x = cx + radius * math.cos(theta)
         y = cy + radius * math.sin(theta)
         path.append((x, y))
 
     path.append((cx_, cy_))
-    path.append((ax, ay))  # close path
+    path.append((ax, ay))
 
     draw.polygon(path, fill=color)
 
-
+# draws multiple raindrops, size and number based on complexity
 def draw_raindrops(draw, palette, complexity, size):
     for _ in range(int((complexity ** 2) * 1.5)):
         cx = random.randint(0, size[0])

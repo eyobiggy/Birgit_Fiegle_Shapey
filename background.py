@@ -1,7 +1,11 @@
+### This code creates a smooth background with a color gradient and soft round shapes as a canvas where all the different
+### shapes are displayed on
+
 from PIL import Image, ImageDraw
 import random
 import math
 
+# Create vertical gradient from 2 colors
 def create_linear_gradient(size, colors):
 
     width, height = size
@@ -16,7 +20,7 @@ def create_linear_gradient(size, colors):
     base.paste(top, (0, 0), mask)
     return base
 
-
+# Add semi-transparent blobs for texture
 def add_soft_blobs(image, palette, blob_count=20):
 
     draw = ImageDraw.Draw(image, 'RGBA')
@@ -33,6 +37,7 @@ def add_soft_blobs(image, palette, blob_count=20):
     return image
 
 
+# Convert hex color to RGBA tuple
 def hex_to_rgba(hex_color, alpha=128):
 
     hex_color = hex_color.lstrip('#')
@@ -41,15 +46,13 @@ def hex_to_rgba(hex_color, alpha=128):
     b = int(hex_color[4:6], 16)
     return (r, g, b, alpha)
 
-
+# Generate background with gradient and soft blobs
 def generate_background(size=(800, 800), palette=None):
     if not palette or len(palette) < 2:
-        palette = ['#ffcc00', '#ffee88']  # fallback yellow gradient
+        palette = ['#ffcc00', '#ffee88']  # fallback: yellow gradient
 
-    # Step 1: Smooth gradient base
     background = create_linear_gradient(size, colors=random.sample(palette, 2))
 
-    # Step 2: Add soft blobs for atmosphere
     background = add_soft_blobs(background, palette, blob_count=15)
 
     return background

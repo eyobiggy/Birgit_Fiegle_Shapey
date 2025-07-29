@@ -1,13 +1,19 @@
+### Here the color palettes for the different vibes are being created based on hue, saturation and value ranges (HSV)
+
 import random
 import colorsys
 from colorsys import hsv_to_rgb
 
+# Base Class for random HSV palette generation
 class Palette:
     def __init__(self, base_hue_range=(0,360), saturation_range=(0.0,1.0), value_range=(0.0,1.0)):
         self.base_hue_range = base_hue_range
         self.saturation_range = saturation_range
         self.value_range = value_range
 
+    # generates hex color codes using random HSV values within defined ranges
+    # picks random hues within base_hue_range, for each hue samples random saturation and value
+    # converts HSV to RGB, formats as hex
     def generate(self, n=10):
         palette = []
         hue_min, hue_max = self.base_hue_range
@@ -52,6 +58,7 @@ class ForestPalette(Palette):
     def __init__(self):
         super().__init__(base_hue_range=(80,130), saturation_range=(0.5,0.9), value_range=(0.1,0.5))
 
+# Return palette object based on vibe
 def get_palette(vibe):
     palette_map = {
         "colourful": ColourfulPalette,

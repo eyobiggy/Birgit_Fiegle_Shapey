@@ -1,3 +1,8 @@
+### This is the GUI for my Art Generator: a start screen to choose the settings for the generated image and
+### a screen to display it, giving the option to save it, return to the start or create a new picture
+
+### THIS IS ALSO THE FILE THAT YOU ARE SUPPOSED TO RUN IN ORDER TO START THE PROGRAM ###
+
 import pygame
 import random
 import sys
@@ -9,10 +14,11 @@ from PIL import Image
 
 pygame.init()
 
+# Load Background images for each screen
 start_bg = pygame.image.load(os.path.join("media", "start_bg.png"))
 display_bg = pygame.image.load(os.path.join("media", "display_bg.png"))
 
-# Constants
+# Screen and UI constants
 WIDTH, HEIGHT = 1000, 800
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -20,146 +26,140 @@ FONT = pygame.font.Font("media/spacemono_font.ttf", 24)
 TEXT_COLOR = (31, 26, 22)
 BG_COLOR = (240, 240, 240)
 
-# Screen
+# Create and name the window
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Shapey - your fun background generator")
 
-# States
+# Application states
 STATE_START = "start"
 STATE_DISPLAY = "display"
 current_state = STATE_START
 
-# Settings
+# Default settings
 vibes = ["sunshine", "dark", "colourful", "pastel", "beige", "ocean","forest"]
 selected_vibe_index = 0
 complexity = 3
 
-# Image holder
+# Holds generated image (PIL) and surface (Pygame)
 generated_image = None
 generated_surface = None
 
+# Save notification system
 save_message = ""
 save_message_timer = 0
 
+# UI state flags
 dropdown_open = False
 dragging_slider = False
 surprise_active = False
 
+# Determine safe path to save generated file
 def ask_save_path_safe():
-    # Choose a base folder — you can also use "~/Desktop" or "~/Documents"
     base_folder = os.path.expanduser("~/Pictures/GeneratedArt")
-    os.makedirs(base_folder, exist_ok=True)  # Create folder if it doesn't exist
-
-    # Generate a unique filename based on timestamp
+    os.makedirs(base_folder, exist_ok=True)  # Creates folder if it doesn't exist
     timestamp = int(time.time())
     filename = f"generated_image_{timestamp}.png"
-
-    # Full path to save image
     return os.path.join(base_folder, filename)
 
-
+# Converts PIL image to Pygame surface
 def pil_to_surface(pil_image):
-    """Convert PIL image to Pygame surface."""
     with BytesIO() as buffer:
         pil_image.save(buffer, format="PNG")
         buffer.seek(0)
         return pygame.image.load(buffer)
 
-
+# Draws a text label at given position
 def draw_text(text, x, y):
     label = FONT.render(text, True, TEXT_COLOR)
     screen.blit(label, (x, y))
 
+# Draws a rectangular panel on the start screen as background for UI
 def draw_start_block(screen, screen_size):
     width, height = screen_size
 
-    # Margins from each side (10% of width/height)
     margin_x = int(width * 0.1)
     margin_y = int(height * 0.1)
 
-    # Block dimensions
     block_width = width - 2 * margin_x
     block_height = height - 2 * margin_y
 
-    # Block position
     block_x = margin_x
     block_y = margin_y
 
     block_rect = pygame.Rect(block_x, block_y, block_width, block_height)
 
-    # Shadow colors
+    # Colors and shadow thickness
     shadow_color = (110, 67, 28)
     border_color = (110, 67, 28)
     fill_color = (255, 237, 212)
-
-    # --- Draw shadow (right and bottom only) ---
     shadow_thickness = 10
-    # Bottom shadow
+
+    # Bottom and right shadows
     pygame.draw.rect(screen, shadow_color,
         pygame.Rect(block_x + shadow_thickness, block_y + block_height, block_width, shadow_thickness))
-    # Right shadow
     pygame.draw.rect(screen, shadow_color,
         pygame.Rect(block_x + block_width, block_y + shadow_thickness, shadow_thickness, block_height))
 
-    # --- Draw block background ---
+    # Background and outline
     pygame.draw.rect(screen, fill_color, block_rect)
-
-    # --- Draw normal outline (top & left) ---
     pygame.draw.rect(screen, border_color, block_rect, 3)
 
+# Draws message box to notify user after saving an image
 def draw_message_box(message, filepath, x, y, width, height):
-
     small_font = pygame.font.Font("media/spacemono_font.ttf", 16)
-    # Colors same as buttons
+
     base_color = (255, 237, 212)
     border_color = (110, 67, 28)
     shadow_color = (110, 67, 28)
     shadow_thickness = 5
 
-    # Draw shadow (bottom and right)
+    # Draws shadow (bottom and right)
     pygame.draw.rect(screen, shadow_color, (x + shadow_thickness, y + height, width, shadow_thickness))
     pygame.draw.rect(screen, shadow_color, (x + width, y + shadow_thickness, shadow_thickness, height))
 
-    # Draw box background
+    # Draws box background and border
     rect = pygame.Rect(x, y, width, height)
     pygame.draw.rect(screen, base_color, rect)
-
-    # Draw border
     pygame.draw.rect(screen, border_color, rect, 2)
 
     # Padding inside box
     padding_x = 10
     padding_y = 5
 
-    # Draw message text lines
+    # line 1 (static message)
     line1_surf = FONT.render(message, True, (31, 26, 22))
 
+    # Truncate path to fit if needed
     max_width = width - padding_x
     filepath_to_show = filepath
     while small_font.size(filepath_to_show)[0] > max_width and len(filepath_to_show) > 3:
         filepath_to_show = filepath_to_show[:-4] + "..."
 
+    # line 2 (file path)
     line2_surf = small_font.render(filepath_to_show, True, (31, 26, 22))
 
+    # Draws text on screen
     screen.blit(line1_surf, (x + padding_x, y + padding_y))
     screen.blit(line2_surf, (x + padding_x, y + padding_y + line1_surf.get_height() + 3))
 
+# Custom Button Class for all interface buttons
 class Button:
     def __init__(self, rect, text, font=FONT, padding=20):
         self.font = font
         self.text = text
         self.padding = padding
 
-        # Measure text and adjust width
+        # Measures text and adjusts width
         text_surf = self.font.render(self.text, True, (0, 0, 0))
         self.text_width = text_surf.get_width()
         self.text_height = text_surf.get_height()
 
+        # Calculate button size based on text and padding
         width = max(rect[2], self.text_width + self.padding * 2)
         height = max(rect[3], self.text_height + self.padding)
-
         self.rect = pygame.Rect(rect[0], rect[1], width, height)
 
+        # Colours
         self.base_color = (255, 237, 212)
         self.border_color = (110, 67, 28)
         self.shadow_color = (110, 67, 28)
@@ -167,16 +167,20 @@ class Button:
         self.active_color = (230, 101, 43)
         self.current_color = self.base_color
 
+        # Button state
         self.is_hovered = False
         self.is_pressed = False
         self.is_active = False
 
+    # Update hover/press state based on mouse interaction
     def update(self, mouse_pos, mouse_click):
         self.is_hovered = self.rect.collidepoint(mouse_pos)
         self.is_pressed = self.is_hovered and mouse_click
 
+    # Draws button onto given surface
     def draw(self, surface):
 
+        # Determines button color based on interaction state
         if self.is_pressed or self.is_active:
             self.current_color = self.active_color
         elif self.is_hovered:
@@ -233,6 +237,7 @@ def draw_start_screen(mouse_pos, mouse_clicked, surprise_active):
     gap = 20
     buttons_per_row = 4
 
+    # Create and draw each vibe button
     for i, vibe in enumerate(vibes):
         row = i // buttons_per_row
         col = i % buttons_per_row
@@ -248,6 +253,7 @@ def draw_start_screen(mouse_pos, mouse_clicked, surprise_active):
     btn_random.update(mouse_pos, mouse_clicked)
     btn_random.draw(screen)
 
+    # draw and activate vibe buttons
     for i, btn in enumerate(vibe_buttons):
         btn.is_active = False if surprise_active else (i == selected_vibe_index)
         btn.draw(screen)
@@ -259,6 +265,8 @@ def draw_start_screen(mouse_pos, mouse_clicked, surprise_active):
     draw_text("Choose complexity:", box_x + 20, slider_y)
     slider_bar = pygame.Rect(box_x + 20, slider_y + 60, 200, 6)
     pygame.draw.rect(screen, (230, 101, 43), slider_bar)
+
+    # Draws slider knob based on current complexity
     knob_x = box_x + 20 + ((complexity - 1) / 4) * 200
     knob_rect = pygame.Rect(knob_x - 10, slider_y + 53, 20, 20)
     pygame.draw.circle(screen, (110, 67, 28), knob_rect.center, knob_rect.width // 2)
@@ -277,6 +285,7 @@ def draw_display_screen():
 
     screen.blit(display_bg, (0, 0))
 
+    # Display generated image, if available
     if generated_surface:
         img_rect = generated_surface.get_rect(topleft=(59,47))
         screen.blit(generated_surface, img_rect)
@@ -296,7 +305,7 @@ def main_loop():
         mouse_pos = pygame.mouse.get_pos()
         mouse_clicked = False
 
-
+        # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -308,6 +317,8 @@ def main_loop():
 
             elif event.type == pygame.KEYDOWN:
                 if current_state == STATE_START:
+
+                    # Arrow keys to navigate vibes and complexity
                     if event.key == pygame.K_RIGHT:
                         selected_vibe_index = (selected_vibe_index + 1) % len(vibes)
                     elif event.key == pygame.K_LEFT:
@@ -320,6 +331,7 @@ def main_loop():
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 dragging_slider = False
 
+        # Updates slider value based on mouse drag
         if dragging_slider:
             slider_left = slider_bar.left
             slider_right = slider_bar.right
@@ -327,15 +339,18 @@ def main_loop():
 
             percent = (clamped_x - slider_left) / (slider_right - slider_left)
 
+            # Converts drag position into complexity value between 1 and 5
             complexity = int(round(1 + percent * 4))
 
+        # start screen logic
         if current_state == STATE_START:
             vibe_buttons, slider_bar, knob_rect, btn_generate, btn_random = draw_start_screen(mouse_pos, mouse_clicked, surprise_active)
 
-            # Update all buttons
+            # Update all vibe buttons
             for btn in vibe_buttons:
                 btn.update(mouse_pos, mouse_clicked)
 
+            # Update and draw "Generate" and "Surprise me" buttons
             btn_generate.update(mouse_pos, mouse_clicked)
             btn_random.update(mouse_pos, mouse_clicked)
             btn_generate.draw(screen)
@@ -348,13 +363,16 @@ def main_loop():
                         selected_vibe_index = index
                         surprise_active = False
 
+                # random vibe selection
                 if btn_random.rect.collidepoint(mouse_pos):
                     selected_vibe_index = random.randint(0, len(vibes) - 1)
                     surprise_active = True
 
+                # Dragging slider knob
                 if knob_rect.collidepoint(mouse_pos):
                     dragging_slider = True
 
+                # generate new image and switch to display screen
                 if btn_generate.was_clicked():
                     vibe = vibes[selected_vibe_index]
                     generated_image = generate_artwork(vibe, complexity)
@@ -362,28 +380,32 @@ def main_loop():
                     current_state = STATE_DISPLAY
 
 
-
+        # Display screen logic
         elif current_state == STATE_DISPLAY:
             draw_display_screen()
 
+            # Action Buttons
             btn_save = Button(pygame.Rect(130, HEIGHT - 150, 200, 50), "Save Image")
             btn_new = Button(pygame.Rect(380, HEIGHT - 150, 200, 50), "Create New")
             btn_back = Button(pygame.Rect(630, HEIGHT - 150, 200, 50), "Back to Start")
 
+            # Update and draw action buttons
             for btn in [btn_save, btn_new, btn_back]:
                 btn.update(mouse_pos, mouse_clicked)
                 btn.draw(screen)
 
+            # Show temporary save message
             if save_message and pygame.time.get_ticks() - save_message_timer < 4000:
                 box_width = 600
                 box_height = 80
                 box_x = (WIDTH - box_width) // 2
-                box_y = HEIGHT - 300  # place it above the buttons (which are at HEIGHT-100)
+                box_y = HEIGHT - 300
 
                 draw_message_box("Image saved to:", save_message, box_x, box_y, box_width, box_height)
 
+            # Handle display button clicks
             if mouse_clicked:
-
+                # save image to file
                 if btn_save.was_clicked():
                     file_path = ask_save_path_safe()
                     if file_path:
@@ -391,19 +413,19 @@ def main_loop():
                         save_message = f"{file_path}"
                         save_message_timer = pygame.time.get_ticks()
 
+                # generate new image with same vibe & complexity
                 elif btn_new.was_clicked():
-
                     vibe = vibes[selected_vibe_index]
                     generated_image = generate_artwork(vibe, complexity)
                     generated_surface = pil_to_surface(generated_image)
 
-
+                # return to start screen
                 elif btn_back.was_clicked():
                     current_state = STATE_START
 
         pygame.display.flip()
         clock.tick(60)
 
-
+# start main loop when script is run directly
 if __name__ == "__main__":
     main_loop()
