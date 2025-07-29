@@ -1,5 +1,4 @@
-### This code creates a smooth background with a color gradient and soft round shapes as a canvas where all the different
-### shapes are displayed on
+### This code creates a smooth background with a color gradient and soft round shapes as a canvas where all the different shapes are displayed on
 
 from PIL import Image, ImageDraw
 import random
