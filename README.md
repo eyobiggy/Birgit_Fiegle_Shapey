@@ -8,4 +8,4 @@ The tool is meant to be fun, accessible, and surprising. Users can adjust comple
 
 Have fun and get creative!
 
-![Demo of Shapey:](media/Shapey_program_showcase.gif)
+![Demo of Shapey](media/shapey_program_showcase.gif)
